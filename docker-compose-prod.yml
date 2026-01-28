@@ -7,18 +7,16 @@ services:
       dockerfile: Dockerfile
     container_name: phone-directory-backend-prod
     restart: unless-stopped
-    ports:
-      - "5000:5000"
+    # Use host network so backend sees host's localhost (Linux only)
+    network_mode: host
     environment:
       NODE_ENV: production
       PORT: 5000
-      # Use HOST MongoDB (Ubuntu host)
-      MONGODB_URI: mongodb://host.docker.internal:27017/phone-directory
+      # Use HOST MongoDB (Ubuntu host) via localhost inside container
+      MONGODB_URI: mongodb://localhost:27017/phone-directory
       JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
       JWT_EXPIRE: 7d
       FRONTEND_URL: http://localhost:3000
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     volumes:
       - backend_uploads:/app/uploads
 
@@ -30,6 +28,9 @@ services:
     restart: unless-stopped
     ports:
       - "3000:80"
+    # Allow nginx to reach backend on the host using the name 'backend'
+    extra_hosts:
+      - "backend:host-gateway"
     depends_on:
       - backend
 
