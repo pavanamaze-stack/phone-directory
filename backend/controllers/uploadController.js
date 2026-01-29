@@ -1,41 +1,26 @@
 const csv = require('csv-parser');
 const fs = require('fs');
-const path = require('path');
 const Employee = require('../models/Employee');
 const UploadLog = require('../models/UploadLog');
-const Joi = require('joi');
 
-// CSV row validation schema – no mandatory fields; all optional
-const employeeSchema = Joi.object({
-  fullName: Joi.string().trim().allow('').default(''),
-  email: Joi.alternatives().try(
-    Joi.string().trim().lowercase().valid(''),
-    Joi.string().trim().lowercase().email()
-  ).default(''),
-  phoneNumber: Joi.string().trim().allow('').default(''),
-  extension: Joi.string().trim().allow('').default(''),
-  department: Joi.string().trim().allow('').default(''),
-  jobTitle: Joi.string().trim().allow('').default(''),
-  officeLocation: Joi.string().trim().allow('').default(''),
-  status: Joi.string().valid('active', 'inactive').default('active')
-}).options({ stripUnknown: true });
-
-// Map common CSV header variations to schema keys (no mandatory fields)
+// Map common CSV header variations to schema keys. No mandatory fields – only columns with data are used.
 const HEADER_MAP = {
-  fullname: 'fullName', 'full name': 'fullName', fullName: 'fullName',
-  email: 'email', 'e-mail': 'email',
-  phonenumber: 'phoneNumber', 'phone number': 'phoneNumber', phone: 'phoneNumber', phoneNumber: 'phoneNumber',
+  fullname: 'fullName', 'full name': 'fullName', fullName: 'fullName', name: 'fullName',
+  email: 'email', 'e-mail': 'email', mail: 'email',
+  phonenumber: 'phoneNumber', 'phone number': 'phoneNumber', phone: 'phoneNumber', phoneNumber: 'phoneNumber', tel: 'phoneNumber',
   extension: 'extension', ext: 'extension',
   department: 'department', dept: 'department',
-  jobtitle: 'jobTitle', 'job title': 'jobTitle', jobTitle: 'jobTitle',
-  officelocation: 'officeLocation', 'office location': 'officeLocation', officeLocation: 'officeLocation',
+  jobtitle: 'jobTitle', 'job title': 'jobTitle', jobTitle: 'jobTitle', title: 'jobTitle',
+  officelocation: 'officeLocation', 'office location': 'officeLocation', officeLocation: 'officeLocation', location: 'officeLocation',
   status: 'status'
 };
 
 const normalizeRowKeys = (row) => {
   const out = {};
   for (const [key, val] of Object.entries(row)) {
-    const normalized = HEADER_MAP[key.trim().toLowerCase()] || key.trim();
+    const k = (key && key.trim()) || '';
+    if (k === '') continue;
+    const normalized = HEADER_MAP[k.toLowerCase()] || k;
     out[normalized] = val;
   }
   return out;
@@ -43,12 +28,26 @@ const normalizeRowKeys = (row) => {
 
 // Sanitize input to prevent CSV injection
 const sanitizeInput = (value) => {
-  if (typeof value !== 'string') return value;
+  if (value == null) return '';
+  if (typeof value !== 'string') return String(value).trim();
   const dangerousChars = ['=', '+', '-', '@', '\t', '\r'];
-  if (dangerousChars.some(char => value.startsWith(char))) {
-    return value.replace(/^[=+\-@\t\r]/, '');
+  let s = value.trim();
+  if (dangerousChars.some(char => s.startsWith(char))) {
+    s = s.replace(/^[=+\-@\t\r]/, '');
   }
-  return value.trim();
+  return s;
+};
+
+// Build employee object from row: only include columns that have non-empty values. No validation – empty fields ignored.
+const rowToEmployee = (normalizedRow) => {
+  const sanitized = {};
+  Object.keys(normalizedRow).forEach(key => {
+    const val = sanitizeInput(normalizedRow[key]);
+    if (val !== '') sanitized[key] = val;
+  });
+  if (!sanitized.status) sanitized.status = 'active';
+  if (sanitized.status !== 'active' && sanitized.status !== 'inactive') sanitized.status = 'active';
+  return sanitized;
 };
 
 // @desc    Upload CSV file
@@ -65,7 +64,6 @@ exports.uploadCSV = async (req, res, next) => {
 
     const filePath = req.file.path;
     const results = [];
-    const errors = [];
     let rowNumber = 0;
 
     // Read and parse CSV file
@@ -74,70 +72,45 @@ exports.uploadCSV = async (req, res, next) => {
         .pipe(csv())
         .on('data', async (row) => {
           rowNumber++;
-          
-          // Normalize headers and sanitize values
           const normalizedRow = normalizeRowKeys(row);
-          const sanitizedRow = {};
-          Object.keys(normalizedRow).forEach(key => {
-            sanitizedRow[key] = sanitizeInput(normalizedRow[key]);
-          });
-
-          // Validate row (no mandatory fields)
-          const { error, value } = employeeSchema.validate(sanitizedRow, {
-            abortEarly: false,
-            allowUnknown: true
-          });
-
-          if (error) {
-            errors.push({
-              row: rowNumber,
-              message: error.details.map(d => d.message).join(', '),
-              data: sanitizedRow
-            });
-          } else {
-            results.push(value);
-          }
+          const employeeData = rowToEmployee(normalizedRow);
+          const keys = Object.keys(employeeData);
+          const hasUserInfo = keys.some(k => k !== 'status') || (keys.length === 1 && keys[0] !== 'status');
+          if (hasUserInfo) results.push(employeeData);
         })
         .on('end', async () => {
           try {
-            // Delete the uploaded file
             fs.unlinkSync(filePath);
 
             let successfulRows = 0;
-            let failedRows = errors.length;
+            let failedRows = 0;
             const upsertErrors = [];
 
-            // Bulk upsert employees (update if exists by email, insert if not). When email empty, insert only.
-            for (const employeeData of results) {
+            // Save each row: only columns with data are used. No mandatory checks. runValidators: false so format (e.g. email) is not enforced.
+            for (let i = 0; i < results.length; i++) {
+              const employeeData = results[i];
               try {
-                const clean = { ...employeeData };
-                if (clean.email === '') clean.email = undefined;
-                if (clean.fullName === '') clean.fullName = undefined;
-                if (clean.phoneNumber === '') clean.phoneNumber = undefined;
-                if (clean.department === '') clean.department = undefined;
-
-                if (clean.email) {
+                if (employeeData.email) {
                   await Employee.findOneAndUpdate(
-                    { email: clean.email },
-                    clean,
-                    { upsert: true, new: true, runValidators: true }
+                    { email: employeeData.email },
+                    employeeData,
+                    { upsert: true, new: true, runValidators: false }
                   );
                 } else {
-                  await Employee.create(clean);
+                  await Employee.create(employeeData, { runValidators: false });
                 }
                 successfulRows++;
               } catch (err) {
                 failedRows++;
                 upsertErrors.push({
-                  row: results.indexOf(employeeData) + 1,
+                  row: i + 1,
                   message: err.message,
                   data: employeeData
                 });
               }
             }
 
-            // Combine validation errors with upsert errors
-            const allErrors = [...errors, ...upsertErrors];
+            const allErrors = upsertErrors;
 
             // Create upload log
             const uploadLog = await UploadLog.create({
