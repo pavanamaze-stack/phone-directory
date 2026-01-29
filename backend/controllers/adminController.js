@@ -2,7 +2,7 @@ const Employee = require('../models/Employee');
 const User = require('../models/User');
 const UploadLog = require('../models/UploadLog');
 
-// All employee columns optional – strip empty strings so optional fields are not stored as ''
+// Create: strip empty strings so optional fields are not stored as '' (avoids unique email conflict)
 const sanitizeEmployeeBody = (body) => {
   const out = { ...body };
   const optionalKeys = ['fullName', 'email', 'phoneNumber', 'extension', 'department', 'jobTitle', 'officeLocation'];
@@ -10,6 +10,16 @@ const sanitizeEmployeeBody = (body) => {
     if (out[key] !== undefined && typeof out[key] === 'string' && !out[key].trim()) {
       out[key] = undefined;
     }
+  });
+  return out;
+};
+
+// Update: allow null/empty so admins can clear fields; only omit undefined
+const sanitizeEmployeeBodyForUpdate = (body) => {
+  const out = { ...body };
+  ['fullName', 'email', 'phoneNumber', 'extension', 'department', 'jobTitle', 'officeLocation'].forEach((key) => {
+    if (out[key] === undefined) return;
+    out[key] = typeof out[key] === 'string' ? out[key].trim() : (out[key] ?? '');
   });
   return out;
 };
@@ -46,7 +56,7 @@ exports.updateEmployee = async (req, res, next) => {
       });
     }
 
-    const body = sanitizeEmployeeBody(req.body);
+    const body = sanitizeEmployeeBodyForUpdate(req.body);
     const updated = await Employee.findByIdAndUpdate(
       req.params.id,
       body,
