@@ -239,33 +239,33 @@ const Dashboard = () => {
             </div>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label>Full Name *</label>
+                <label>Full Name (optional)</label>
                 <input
                   type="text"
                   name="fullName"
                   value={formData.fullName}
                   onChange={handleInputChange}
-                  required
+                  placeholder="Leave blank if not needed"
                 />
               </div>
               <div className="form-group">
-                <label>Email *</label>
+                <label>Email (optional)</label>
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  required
+                  placeholder="Leave blank if not needed"
                 />
               </div>
               <div className="form-group">
-                <label>Phone Number *</label>
+                <label>Phone Number (optional)</label>
                 <input
                   type="text"
                   name="phoneNumber"
                   value={formData.phoneNumber}
                   onChange={handleInputChange}
-                  required
+                  placeholder="Leave blank if not needed"
                 />
               </div>
               <div className="form-group">
@@ -278,13 +278,13 @@ const Dashboard = () => {
                 />
               </div>
               <div className="form-group">
-                <label>Department *</label>
+                <label>Department (optional)</label>
                 <input
                   type="text"
                   name="department"
                   value={formData.department}
                   onChange={handleInputChange}
-                  required
+                  placeholder="Leave blank if not needed"
                 />
               </div>
               <div className="form-group">

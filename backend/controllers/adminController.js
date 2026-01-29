@@ -2,12 +2,25 @@ const Employee = require('../models/Employee');
 const User = require('../models/User');
 const UploadLog = require('../models/UploadLog');
 
-// @desc    Create employee
+// All employee columns optional – strip empty strings so optional fields are not stored as ''
+const sanitizeEmployeeBody = (body) => {
+  const out = { ...body };
+  const optionalKeys = ['fullName', 'email', 'phoneNumber', 'extension', 'department', 'jobTitle', 'officeLocation'];
+  optionalKeys.forEach((key) => {
+    if (out[key] !== undefined && typeof out[key] === 'string' && !out[key].trim()) {
+      out[key] = undefined;
+    }
+  });
+  return out;
+};
+
+// @desc    Create employee – all columns optional
 // @route   POST /api/admin/employees
 // @access  Private/Admin
 exports.createEmployee = async (req, res, next) => {
   try {
-    const employee = await Employee.create(req.body);
+    const body = sanitizeEmployeeBody(req.body);
+    const employee = await Employee.create(body);
 
     res.status(201).json({
       success: true,
@@ -19,12 +32,12 @@ exports.createEmployee = async (req, res, next) => {
   }
 };
 
-// @desc    Update employee
+// @desc    Update employee – all columns optional
 // @route   PUT /api/admin/employees/:id
 // @access  Private/Admin
 exports.updateEmployee = async (req, res, next) => {
   try {
-    let employee = await Employee.findById(req.params.id);
+    const employee = await Employee.findById(req.params.id);
 
     if (!employee) {
       return res.status(404).json({
@@ -33,19 +46,20 @@ exports.updateEmployee = async (req, res, next) => {
       });
     }
 
-    employee = await Employee.findByIdAndUpdate(
+    const body = sanitizeEmployeeBody(req.body);
+    const updated = await Employee.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      body,
       {
         new: true,
-        runValidators: true
+        runValidators: false
       }
     );
 
     res.json({
       success: true,
       message: 'Employee updated successfully',
-      data: { employee }
+      data: { employee: updated }
     });
   } catch (error) {
     next(error);
