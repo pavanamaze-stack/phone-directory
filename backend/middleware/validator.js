@@ -42,22 +42,16 @@ exports.validateLogin = [
   validate
 ];
 
-// Employee validation rules
+// Employee validation rules – all columns optional, no required field enforcement
 exports.validateEmployee = [
-  body('fullName')
-    .trim()
-    .notEmpty().withMessage('Full name is required'),
-  body('email')
-    .trim()
-    .notEmpty().withMessage('Email is required')
-    .isEmail().withMessage('Please provide a valid email')
-    .normalizeEmail(),
-  body('phoneNumber')
-    .trim()
-    .notEmpty().withMessage('Phone number is required'),
-  body('department')
-    .trim()
-    .notEmpty().withMessage('Department is required'),
+  body('fullName').optional().trim(),
+  body('email').optional().trim().isEmail().withMessage('Invalid email when provided').normalizeEmail(),
+  body('phoneNumber').optional().trim(),
+  body('extension').optional().trim(),
+  body('department').optional().trim(),
+  body('jobTitle').optional().trim(),
+  body('officeLocation').optional().trim(),
+  body('status').optional().isIn(['active', 'inactive']).withMessage('Status must be active or inactive'),
   validate
 ];
 

@@ -1,26 +1,29 @@
 const mongoose = require('mongoose');
 
+// All columns optional – no required field validation
 const employeeSchema = new mongoose.Schema({
   fullName: {
     type: String,
-    required: [true, 'Full name is required'],
+    required: false,
     trim: true,
-    index: true
+    index: true,
+    default: ''
   },
   email: {
     type: String,
-    required: [true, 'Email is required'],
+    required: false,
     unique: true,
+    sparse: true,
     lowercase: true,
     trim: true,
-    match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email'],
     index: true
   },
   phoneNumber: {
     type: String,
-    required: [true, 'Phone number is required'],
+    required: false,
     trim: true,
-    index: true
+    index: true,
+    default: ''
   },
   extension: {
     type: String,
@@ -28,9 +31,10 @@ const employeeSchema = new mongoose.Schema({
   },
   department: {
     type: String,
-    required: [true, 'Department is required'],
+    required: false,
     trim: true,
-    index: true
+    index: true,
+    default: ''
   },
   jobTitle: {
     type: String,
@@ -50,7 +54,6 @@ const employeeSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Compound indexes for common queries
 employeeSchema.index({ department: 1, status: 1 });
 employeeSchema.index({ fullName: 'text', email: 'text', department: 'text' });
 
