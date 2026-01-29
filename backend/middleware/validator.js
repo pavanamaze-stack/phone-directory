@@ -42,22 +42,22 @@ exports.validateLogin = [
   validate
 ];
 
-// Employee validation rules
+// Employee validation rules (fullName, email, phoneNumber, department optional)
 exports.validateEmployee = [
   body('fullName')
-    .trim()
-    .notEmpty().withMessage('Full name is required'),
+    .optional()
+    .trim(),
   body('email')
+    .optional()
     .trim()
-    .notEmpty().withMessage('Email is required')
-    .isEmail().withMessage('Please provide a valid email')
+    .isEmail().withMessage('Please provide a valid email when provided')
     .normalizeEmail(),
   body('phoneNumber')
-    .trim()
-    .notEmpty().withMessage('Phone number is required'),
+    .optional()
+    .trim(),
   body('department')
-    .trim()
-    .notEmpty().withMessage('Department is required'),
+    .optional()
+    .trim(),
   validate
 ];
 

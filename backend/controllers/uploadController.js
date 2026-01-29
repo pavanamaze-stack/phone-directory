@@ -5,26 +5,15 @@ const Employee = require('../models/Employee');
 const UploadLog = require('../models/UploadLog');
 const Joi = require('joi');
 
-// CSV row validation schema
+// CSV row validation schema (fullName, email, phoneNumber, department optional)
 const employeeSchema = Joi.object({
-  fullName: Joi.string().trim().required().messages({
-    'string.empty': 'Full name is required',
-    'any.required': 'Full name is required'
+  fullName: Joi.string().trim().allow('').default(''),
+  email: Joi.string().email().trim().lowercase().allow('').default('').messages({
+    'string.email': 'Invalid email format when provided'
   }),
-  email: Joi.string().email().trim().lowercase().required().messages({
-    'string.email': 'Invalid email format',
-    'string.empty': 'Email is required',
-    'any.required': 'Email is required'
-  }),
-  phoneNumber: Joi.string().trim().required().messages({
-    'string.empty': 'Phone number is required',
-    'any.required': 'Phone number is required'
-  }),
+  phoneNumber: Joi.string().trim().allow('').default(''),
   extension: Joi.string().trim().allow(''),
-  department: Joi.string().trim().required().messages({
-    'string.empty': 'Department is required',
-    'any.required': 'Department is required'
-  }),
+  department: Joi.string().trim().allow('').default(''),
   jobTitle: Joi.string().trim().allow(''),
   officeLocation: Joi.string().trim().allow(''),
   status: Joi.string().valid('active', 'inactive').default('active')
@@ -95,14 +84,24 @@ exports.uploadCSV = async (req, res, next) => {
             let failedRows = errors.length;
             const upsertErrors = [];
 
-            // Bulk upsert employees (update if exists, insert if not)
+            // Bulk upsert employees (update if exists by email, insert if not). When email empty, insert only.
             for (const employeeData of results) {
               try {
-                await Employee.findOneAndUpdate(
-                  { email: employeeData.email },
-                  employeeData,
-                  { upsert: true, new: true, runValidators: true }
-                );
+                const clean = { ...employeeData };
+                if (clean.email === '') clean.email = undefined;
+                if (clean.fullName === '') clean.fullName = undefined;
+                if (clean.phoneNumber === '') clean.phoneNumber = undefined;
+                if (clean.department === '') clean.department = undefined;
+
+                if (clean.email) {
+                  await Employee.findOneAndUpdate(
+                    { email: clean.email },
+                    clean,
+                    { upsert: true, new: true, runValidators: true }
+                  );
+                } else {
+                  await Employee.create(clean);
+                }
                 successfulRows++;
               } catch (err) {
                 failedRows++;

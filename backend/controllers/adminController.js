@@ -2,12 +2,24 @@ const Employee = require('../models/Employee');
 const User = require('../models/User');
 const UploadLog = require('../models/UploadLog');
 
+// Strip empty strings to undefined so optional fields don't violate unique (e.g. email)
+const sanitizeEmployeeBody = (body) => {
+  const out = { ...body };
+  ['fullName', 'email', 'phoneNumber', 'department'].forEach((key) => {
+    if (out[key] !== undefined && typeof out[key] === 'string' && !out[key].trim()) {
+      out[key] = undefined;
+    }
+  });
+  return out;
+};
+
 // @desc    Create employee
 // @route   POST /api/admin/employees
 // @access  Private/Admin
 exports.createEmployee = async (req, res, next) => {
   try {
-    const employee = await Employee.create(req.body);
+    const body = sanitizeEmployeeBody(req.body);
+    const employee = await Employee.create(body);
 
     res.status(201).json({
       success: true,
@@ -33,9 +45,10 @@ exports.updateEmployee = async (req, res, next) => {
       });
     }
 
+    const body = sanitizeEmployeeBody(req.body);
     employee = await Employee.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      body,
       {
         new: true,
         runValidators: true
