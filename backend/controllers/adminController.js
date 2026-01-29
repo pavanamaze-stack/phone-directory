@@ -93,15 +93,24 @@ exports.getUsers = async (req, res, next) => {
   }
 };
 
-// @desc    Create user (Admin only)
+// @desc    Create user (Admin only). No fields required; defaults used when omitted.
 // @route   POST /api/admin/users
 // @access  Private/Admin
 exports.createUser = async (req, res, next) => {
   try {
     const { name, email, password, role } = req.body;
 
-    // Check if user exists
-    const userExists = await User.findOne({ email });
+    const trimmedName = (name && typeof name === 'string' && name.trim()) || '';
+    const trimmedEmail = (email && typeof email === 'string' && email.trim()) || '';
+    const trimmedPassword = (password && typeof password === 'string' && password.trim()) || '';
+
+    const finalName = trimmedName.length >= 2 ? trimmedName : 'User';
+    const finalEmail = trimmedEmail && /^\S+@\S+\.\S+$/.test(trimmedEmail)
+      ? trimmedEmail
+      : `user-${Date.now()}-${Math.random().toString(36).slice(2, 10)}@placeholder.local`;
+    const finalPassword = trimmedPassword.length >= 6 ? trimmedPassword : 'changeme';
+
+    const userExists = await User.findOne({ email: finalEmail });
     if (userExists) {
       return res.status(400).json({
         success: false,
@@ -109,12 +118,11 @@ exports.createUser = async (req, res, next) => {
       });
     }
 
-    // Create user
     const user = await User.create({
-      name,
-      email,
-      password,
-      role: role || 'USER',
+      name: finalName,
+      email: finalEmail,
+      password: finalPassword,
+      role: role === 'ADMIN' ? 'ADMIN' : 'USER',
       isActive: true
     });
 

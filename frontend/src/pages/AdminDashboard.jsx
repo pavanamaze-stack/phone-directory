@@ -9,11 +9,19 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('users')
   const [editingUser, setEditingUser] = useState(null)
+  const [showAddUser, setShowAddUser] = useState(false)
   const [userForm, setUserForm] = useState({
     name: '',
     email: '',
     role: 'USER',
     isActive: true,
+    password: '',
+    confirmPassword: ''
+  })
+  const [addUserForm, setAddUserForm] = useState({
+    name: '',
+    email: '',
+    role: 'USER',
     password: '',
     confirmPassword: ''
   })
@@ -69,6 +77,41 @@ const AdminDashboard = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }))
+  }
+
+  const handleAddUserFormChange = (e) => {
+    const { name, value } = e.target
+    setAddUserForm((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleAddUser = async (e) => {
+    e.preventDefault()
+    if (addUserForm.password && addUserForm.password.length < 6) {
+      toast.error('Password must be at least 6 characters when provided')
+      return
+    }
+    if (addUserForm.password && addUserForm.password !== addUserForm.confirmPassword) {
+      toast.error('Passwords do not match')
+      return
+    }
+    try {
+      setSavingUser(true)
+      const payload = {
+        role: addUserForm.role
+      }
+      if (addUserForm.name.trim()) payload.name = addUserForm.name.trim()
+      if (addUserForm.email.trim()) payload.email = addUserForm.email.trim()
+      if (addUserForm.password) payload.password = addUserForm.password
+      await api.post('/admin/users', payload)
+      toast.success('User created successfully')
+      setShowAddUser(false)
+      setAddUserForm({ name: '', email: '', role: 'USER', password: '', confirmPassword: '' })
+      fetchData()
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to create user')
+    } finally {
+      setSavingUser(false)
+    }
   }
 
   const handleSaveUser = async (e) => {
@@ -141,7 +184,16 @@ const AdminDashboard = () => {
 
       {activeTab === 'users' && (
         <div className="card">
-          <h2>Users</h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h2 style={{ margin: 0 }}>Users</h2>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => setShowAddUser(true)}
+            >
+              Add User
+            </button>
+          </div>
           <table className="table">
             <thead>
               <tr>
@@ -241,6 +293,91 @@ const AdminDashboard = () => {
         </div>
       )}
 
+      {showAddUser && (
+        <div className="modal">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h2>Add User</h2>
+              <button
+                className="close-btn"
+                onClick={() => setShowAddUser(false)}
+              >
+                ×
+              </button>
+            </div>
+            <form onSubmit={handleAddUser}>
+              <div className="form-group">
+                <label>Name (optional)</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={addUserForm.name}
+                  onChange={handleAddUserFormChange}
+                  placeholder="Leave blank for default"
+                />
+              </div>
+              <div className="form-group">
+                <label>Email (optional)</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={addUserForm.email}
+                  onChange={handleAddUserFormChange}
+                  placeholder="Leave blank for placeholder email"
+                />
+              </div>
+              <div className="form-group">
+                <label>Role</label>
+                <select
+                  name="role"
+                  value={addUserForm.role}
+                  onChange={handleAddUserFormChange}
+                >
+                  <option value="ADMIN">Admin</option>
+                  <option value="USER">User</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Password (optional)</label>
+                <input
+                  type="password"
+                  name="password"
+                  value={addUserForm.password}
+                  onChange={handleAddUserFormChange}
+                  placeholder="Leave blank for default password"
+                />
+              </div>
+              <div className="form-group">
+                <label>Confirm Password (optional)</label>
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  value={addUserForm.confirmPassword}
+                  onChange={handleAddUserFormChange}
+                  placeholder="Re-enter password if set"
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={savingUser}
+                >
+                  {savingUser ? 'Creating...' : 'Create User'}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowAddUser(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {editingUser && (
         <div className="modal">
           <div className="modal-content">
@@ -255,13 +392,12 @@ const AdminDashboard = () => {
             </div>
             <form onSubmit={handleSaveUser}>
               <div className="form-group">
-                <label>Name</label>
+                <label>Name (optional)</label>
                 <input
                   type="text"
                   name="name"
                   value={userForm.name}
                   onChange={handleUserFormChange}
-                  required
                 />
               </div>
               <div className="form-group">

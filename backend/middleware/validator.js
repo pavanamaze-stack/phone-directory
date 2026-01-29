@@ -61,20 +61,20 @@ exports.validateEmployee = [
   validate
 ];
 
-// Admin create user validation rules
+// Admin create user validation rules (all fields optional)
 exports.validateCreateUser = [
   body('name')
+    .optional()
     .trim()
-    .notEmpty().withMessage('Name is required')
-    .isLength({ min: 2 }).withMessage('Name must be at least 2 characters'),
+    .isLength({ min: 2 }).withMessage('Name must be at least 2 characters when provided'),
   body('email')
+    .optional()
     .trim()
-    .notEmpty().withMessage('Email is required')
-    .isEmail().withMessage('Please provide a valid email')
+    .isEmail().withMessage('Please provide a valid email when provided')
     .normalizeEmail(),
   body('password')
-    .notEmpty().withMessage('Password is required')
-    .isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+    .optional()
+    .isLength({ min: 6 }).withMessage('Password must be at least 6 characters when provided'),
   body('role')
     .optional()
     .isIn(['ADMIN', 'USER']).withMessage('Role must be either ADMIN or USER'),
