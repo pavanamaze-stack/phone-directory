@@ -80,3 +80,21 @@ exports.validateCreateUser = [
     .isIn(['ADMIN', 'USER']).withMessage('Role must be either ADMIN or USER'),
   validate
 ];
+
+// Admin update user validation rules (all fields optional)
+exports.validateUpdateUser = [
+  body('name')
+    .optional()
+    .trim()
+    .isLength({ min: 2 }).withMessage('Name must be at least 2 characters'),
+  body('password')
+    .optional()
+    .isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+  body('role')
+    .optional()
+    .isIn(['ADMIN', 'USER']).withMessage('Role must be either ADMIN or USER'),
+  body('isActive')
+    .optional()
+    .isBoolean().withMessage('isActive must be a boolean'),
+  validate
+];

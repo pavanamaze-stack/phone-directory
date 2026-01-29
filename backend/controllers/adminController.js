@@ -128,12 +128,22 @@ exports.createUser = async (req, res, next) => {
   }
 };
 
-// @desc    Update user (activate/deactivate)
+// @desc    Update user (name, role, active, password)
 // @route   PUT /api/admin/users/:id
 // @access  Private/Admin
 exports.updateUser = async (req, res, next) => {
   try {
-    const { isActive, role } = req.body;
+    const { isActive, role, name, password } = req.body;
+
+    // Find user first so we can safely update password via pre-save hook
+    const user = await User.findById(req.params.id).select('+password');
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
 
     // Prevent admin from deactivating themselves
     if (req.params.id === req.user._id.toString() && isActive === false) {
@@ -143,23 +153,32 @@ exports.updateUser = async (req, res, next) => {
       });
     }
 
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      { isActive, role },
-      { new: true, runValidators: true }
-    );
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
+    // Update allowed fields
+    if (typeof name === 'string' && name.trim()) {
+      user.name = name.trim();
     }
+
+    if (typeof role === 'string') {
+      user.role = role;
+    }
+
+    if (typeof isActive === 'boolean') {
+      user.isActive = isActive;
+    }
+
+    // If password provided, set it so pre-save hook hashes it
+    if (typeof password === 'string' && password.length) {
+      user.password = password;
+    }
+
+    await user.save();
+
+    const sanitizedUser = user.toJSON();
 
     res.json({
       success: true,
       message: 'User updated successfully',
-      data: { user }
+      data: { user: sanitizedUser }
     });
   } catch (error) {
     next(error);

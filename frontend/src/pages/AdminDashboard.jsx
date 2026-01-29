@@ -8,6 +8,16 @@ const AdminDashboard = () => {
   const [uploadHistory, setUploadHistory] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('users')
+  const [editingUser, setEditingUser] = useState(null)
+  const [userForm, setUserForm] = useState({
+    name: '',
+    email: '',
+    role: 'USER',
+    isActive: true,
+    password: '',
+    confirmPassword: ''
+  })
+  const [savingUser, setSavingUser] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -38,6 +48,71 @@ const AdminDashboard = () => {
       fetchData()
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to update user')
+    }
+  }
+
+  const openEditUser = (user) => {
+    setEditingUser(user)
+    setUserForm({
+      name: user.name || '',
+      email: user.email || '',
+      role: user.role || 'USER',
+      isActive: user.isActive ?? true,
+      password: '',
+      confirmPassword: ''
+    })
+  }
+
+  const handleUserFormChange = (e) => {
+    const { name, value, type, checked } = e.target
+    setUserForm((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }))
+  }
+
+  const handleSaveUser = async (e) => {
+    e.preventDefault()
+    if (!editingUser) return
+
+    if (userForm.password && userForm.password.length < 6) {
+      toast.error('Password must be at least 6 characters')
+      return
+    }
+
+    if (userForm.password && userForm.password !== userForm.confirmPassword) {
+      toast.error('Passwords do not match')
+      return
+    }
+
+    const payload = {
+      name: userForm.name.trim(),
+      role: userForm.role,
+      isActive: userForm.isActive
+    }
+
+    if (userForm.password) {
+      payload.password = userForm.password
+    }
+
+    try {
+      setSavingUser(true)
+      await api.put(`/admin/users/${editingUser._id}`, payload)
+      toast.success('User updated successfully')
+      setEditingUser(null)
+      setUserForm({
+        name: '',
+        email: '',
+        role: 'USER',
+        isActive: true,
+        password: '',
+        confirmPassword: ''
+      })
+      fetchData()
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update user')
+    } finally {
+      setSavingUser(false)
     }
   }
 
@@ -95,6 +170,13 @@ const AdminDashboard = () => {
                   <td>
                     <button
                       className="btn btn-sm btn-secondary"
+                      onClick={() => openEditUser(user)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="btn btn-sm btn-secondary"
+                      style={{ marginLeft: '8px' }}
                       onClick={() =>
                         handleUserUpdate(user._id, {
                           isActive: !user.isActive
@@ -156,6 +238,102 @@ const AdminDashboard = () => {
               )}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {editingUser && (
+        <div className="modal">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h2>Edit User</h2>
+              <button
+                className="close-btn"
+                onClick={() => setEditingUser(null)}
+              >
+                ×
+              </button>
+            </div>
+            <form onSubmit={handleSaveUser}>
+              <div className="form-group">
+                <label>Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={userForm.name}
+                  onChange={handleUserFormChange}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Email (read-only)</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={userForm.email}
+                  disabled
+                />
+              </div>
+              <div className="form-group">
+                <label>Role</label>
+                <select
+                  name="role"
+                  value={userForm.role}
+                  onChange={handleUserFormChange}
+                >
+                  <option value="ADMIN">Admin</option>
+                  <option value="USER">User</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    name="isActive"
+                    checked={userForm.isActive}
+                    onChange={handleUserFormChange}
+                    style={{ marginRight: '8px' }}
+                  />
+                  Active
+                </label>
+              </div>
+              <div className="form-group">
+                <label>New Password (optional)</label>
+                <input
+                  type="password"
+                  name="password"
+                  value={userForm.password}
+                  onChange={handleUserFormChange}
+                  placeholder="Leave blank to keep current password"
+                />
+              </div>
+              <div className="form-group">
+                <label>Confirm New Password</label>
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  value={userForm.confirmPassword}
+                  onChange={handleUserFormChange}
+                  placeholder="Re-enter new password"
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={savingUser}
+                >
+                  {savingUser ? 'Saving...' : 'Save Changes'}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setEditingUser(null)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

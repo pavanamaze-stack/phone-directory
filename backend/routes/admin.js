@@ -11,7 +11,7 @@ const {
   getUploadLog
 } = require('../controllers/adminController');
 const { protect, authorize } = require('../middleware/auth');
-const { validateEmployee, validateCreateUser } = require('../middleware/validator');
+const { validateEmployee, validateCreateUser, validateUpdateUser } = require('../middleware/validator');
 
 // All routes require admin access
 router.use(protect, authorize('ADMIN'));
@@ -24,7 +24,7 @@ router.delete('/employees/:id', deleteEmployee);
 // User management
 router.get('/users', getUsers);
 router.post('/users', validateCreateUser, createUser);
-router.put('/users/:id', updateUser);
+router.put('/users/:id', validateUpdateUser, updateUser);
 
 // Upload history
 router.get('/upload-history', getUploadHistory);
