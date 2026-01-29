@@ -28,7 +28,7 @@ const Dashboard = () => {
     setLoading(true)
     try {
       const response = await api.get('/employees', {
-        params: { limit: 100 }
+        params: { limit: 10000 }
       })
       setEmployees(response.data.data.employees)
     } catch (error) {

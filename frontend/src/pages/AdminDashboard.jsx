@@ -5,6 +5,7 @@ import './AdminDashboard.css'
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([])
+  const [employees, setEmployees] = useState([])
   const [uploadHistory, setUploadHistory] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('users')
@@ -37,6 +38,9 @@ const AdminDashboard = () => {
       if (activeTab === 'users') {
         const response = await api.get('/admin/users')
         setUsers(response.data.data.users)
+      } else if (activeTab === 'employees') {
+        const response = await api.get('/employees', { params: { limit: 10000 } })
+        setEmployees(response.data.data.employees)
       } else {
         const response = await api.get('/admin/upload-history')
         setUploadHistory(response.data.data.uploads)
@@ -175,6 +179,12 @@ const AdminDashboard = () => {
           User Management
         </button>
         <button
+          className={`tab ${activeTab === 'employees' ? 'active' : ''}`}
+          onClick={() => setActiveTab('employees')}
+        >
+          Employees (Uploaded)
+        </button>
+        <button
           className={`tab ${activeTab === 'history' ? 'active' : ''}`}
           onClick={() => setActiveTab('history')}
         >
@@ -242,6 +252,55 @@ const AdminDashboard = () => {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {activeTab === 'employees' && (
+        <div className="card">
+          <h2>Employees ({employees.length} total)</h2>
+          <p style={{ marginTop: 0, color: 'var(--text-muted)', fontSize: '14px' }}>
+            All records from CSV uploads and manual entries. Switch to Dashboard to add or edit.
+          </p>
+          <div style={{ overflowX: 'auto' }}>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Extension</th>
+                  <th>Department</th>
+                  <th>Job Title</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {employees.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" style={{ textAlign: 'center', padding: '40px' }}>
+                      No employees yet. Upload a CSV or add employees from the Dashboard.
+                    </td>
+                  </tr>
+                ) : (
+                  employees.map((emp) => (
+                    <tr key={emp._id}>
+                      <td>{emp.fullName || '—'}</td>
+                      <td>{emp.email || '—'}</td>
+                      <td>{emp.phoneNumber || '—'}</td>
+                      <td>{emp.extension || '—'}</td>
+                      <td>{emp.department || '—'}</td>
+                      <td>{emp.jobTitle || '—'}</td>
+                      <td>
+                        <span className={`status-badge ${emp.status === 'active' ? 'active' : 'inactive'}`}>
+                          {emp.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
