@@ -86,7 +86,7 @@ const Dashboard = () => {
         toast.success('Employee created successfully')
       }
       setShowModal(false)
-      fetchEmployees()
+      await fetchEmployees()
     } catch (error) {
       toast.error(error.response?.data?.message || 'Operation failed')
     }
@@ -130,7 +130,7 @@ const Dashboard = () => {
       if (response.data.data.uploadLog.errors.length > 0) {
         console.log('Errors:', response.data.data.uploadLog.errors)
       }
-      fetchEmployees()
+      await fetchEmployees()
     } catch (error) {
       toast.error(error.response?.data?.message || 'Upload failed')
     } finally {

@@ -5,24 +5,45 @@ const Employee = require('../models/Employee');
 const UploadLog = require('../models/UploadLog');
 const Joi = require('joi');
 
-// CSV row validation schema (fullName, email, phoneNumber, department optional)
+// CSV row validation schema – no mandatory fields; all optional
 const employeeSchema = Joi.object({
   fullName: Joi.string().trim().allow('').default(''),
-  email: Joi.string().email().trim().lowercase().allow('').default('').messages({
-    'string.email': 'Invalid email format when provided'
-  }),
+  email: Joi.alternatives().try(
+    Joi.string().trim().lowercase().valid(''),
+    Joi.string().trim().lowercase().email()
+  ).default(''),
   phoneNumber: Joi.string().trim().allow('').default(''),
-  extension: Joi.string().trim().allow(''),
+  extension: Joi.string().trim().allow('').default(''),
   department: Joi.string().trim().allow('').default(''),
-  jobTitle: Joi.string().trim().allow(''),
-  officeLocation: Joi.string().trim().allow(''),
+  jobTitle: Joi.string().trim().allow('').default(''),
+  officeLocation: Joi.string().trim().allow('').default(''),
   status: Joi.string().valid('active', 'inactive').default('active')
-});
+}).options({ stripUnknown: true });
+
+// Map common CSV header variations to schema keys (no mandatory fields)
+const HEADER_MAP = {
+  fullname: 'fullName', 'full name': 'fullName', fullName: 'fullName',
+  email: 'email', 'e-mail': 'email',
+  phonenumber: 'phoneNumber', 'phone number': 'phoneNumber', phone: 'phoneNumber', phoneNumber: 'phoneNumber',
+  extension: 'extension', ext: 'extension',
+  department: 'department', dept: 'department',
+  jobtitle: 'jobTitle', 'job title': 'jobTitle', jobTitle: 'jobTitle',
+  officelocation: 'officeLocation', 'office location': 'officeLocation', officeLocation: 'officeLocation',
+  status: 'status'
+};
+
+const normalizeRowKeys = (row) => {
+  const out = {};
+  for (const [key, val] of Object.entries(row)) {
+    const normalized = HEADER_MAP[key.trim().toLowerCase()] || key.trim();
+    out[normalized] = val;
+  }
+  return out;
+};
 
 // Sanitize input to prevent CSV injection
 const sanitizeInput = (value) => {
   if (typeof value !== 'string') return value;
-  // Remove potentially dangerous characters that could lead to CSV injection
   const dangerousChars = ['=', '+', '-', '@', '\t', '\r'];
   if (dangerousChars.some(char => value.startsWith(char))) {
     return value.replace(/^[=+\-@\t\r]/, '');
@@ -54,15 +75,17 @@ exports.uploadCSV = async (req, res, next) => {
         .on('data', async (row) => {
           rowNumber++;
           
-          // Sanitize all values
+          // Normalize headers and sanitize values
+          const normalizedRow = normalizeRowKeys(row);
           const sanitizedRow = {};
-          Object.keys(row).forEach(key => {
-            sanitizedRow[key.trim()] = sanitizeInput(row[key]);
+          Object.keys(normalizedRow).forEach(key => {
+            sanitizedRow[key] = sanitizeInput(normalizedRow[key]);
           });
 
-          // Validate row
+          // Validate row (no mandatory fields)
           const { error, value } = employeeSchema.validate(sanitizedRow, {
-            abortEarly: false
+            abortEarly: false,
+            allowUnknown: true
           });
 
           if (error) {

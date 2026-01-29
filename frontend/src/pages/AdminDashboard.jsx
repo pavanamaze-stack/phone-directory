@@ -53,7 +53,7 @@ const AdminDashboard = () => {
     try {
       await api.put(`/admin/users/${userId}`, updates)
       toast.success('User updated successfully')
-      fetchData()
+      await fetchData()
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to update user')
     }
@@ -151,7 +151,7 @@ const AdminDashboard = () => {
         password: '',
         confirmPassword: ''
       })
-      fetchData()
+      await fetchData()
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to update user')
     } finally {
