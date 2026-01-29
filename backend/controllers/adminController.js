@@ -2,24 +2,12 @@ const Employee = require('../models/Employee');
 const User = require('../models/User');
 const UploadLog = require('../models/UploadLog');
 
-// Strip empty strings to undefined so optional fields don't violate unique (e.g. email)
-const sanitizeEmployeeBody = (body) => {
-  const out = { ...body };
-  ['fullName', 'email', 'phoneNumber', 'department'].forEach((key) => {
-    if (out[key] !== undefined && typeof out[key] === 'string' && !out[key].trim()) {
-      out[key] = undefined;
-    }
-  });
-  return out;
-};
-
 // @desc    Create employee
 // @route   POST /api/admin/employees
 // @access  Private/Admin
 exports.createEmployee = async (req, res, next) => {
   try {
-    const body = sanitizeEmployeeBody(req.body);
-    const employee = await Employee.create(body);
+    const employee = await Employee.create(req.body);
 
     res.status(201).json({
       success: true,
@@ -45,10 +33,9 @@ exports.updateEmployee = async (req, res, next) => {
       });
     }
 
-    const body = sanitizeEmployeeBody(req.body);
     employee = await Employee.findByIdAndUpdate(
       req.params.id,
-      body,
+      req.body,
       {
         new: true,
         runValidators: true
@@ -106,24 +93,15 @@ exports.getUsers = async (req, res, next) => {
   }
 };
 
-// @desc    Create user (Admin only). No fields required; defaults used when omitted.
+// @desc    Create user (Admin only)
 // @route   POST /api/admin/users
 // @access  Private/Admin
 exports.createUser = async (req, res, next) => {
   try {
     const { name, email, password, role } = req.body;
 
-    const trimmedName = (name && typeof name === 'string' && name.trim()) || '';
-    const trimmedEmail = (email && typeof email === 'string' && email.trim()) || '';
-    const trimmedPassword = (password && typeof password === 'string' && password.trim()) || '';
-
-    const finalName = trimmedName.length >= 2 ? trimmedName : 'User';
-    const finalEmail = trimmedEmail && /^\S+@\S+\.\S+$/.test(trimmedEmail)
-      ? trimmedEmail
-      : `user-${Date.now()}-${Math.random().toString(36).slice(2, 10)}@placeholder.local`;
-    const finalPassword = trimmedPassword.length >= 6 ? trimmedPassword : 'changeme';
-
-    const userExists = await User.findOne({ email: finalEmail });
+    // Check if user exists
+    const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({
         success: false,
@@ -131,11 +109,12 @@ exports.createUser = async (req, res, next) => {
       });
     }
 
+    // Create user
     const user = await User.create({
-      name: finalName,
-      email: finalEmail,
-      password: finalPassword,
-      role: role === 'ADMIN' ? 'ADMIN' : 'USER',
+      name,
+      email,
+      password,
+      role: role || 'USER',
       isActive: true
     });
 

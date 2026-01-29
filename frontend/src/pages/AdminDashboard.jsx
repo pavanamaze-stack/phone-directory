@@ -5,24 +5,15 @@ import './AdminDashboard.css'
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([])
-  const [employees, setEmployees] = useState([])
   const [uploadHistory, setUploadHistory] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('users')
   const [editingUser, setEditingUser] = useState(null)
-  const [showAddUser, setShowAddUser] = useState(false)
   const [userForm, setUserForm] = useState({
     name: '',
     email: '',
     role: 'USER',
     isActive: true,
-    password: '',
-    confirmPassword: ''
-  })
-  const [addUserForm, setAddUserForm] = useState({
-    name: '',
-    email: '',
-    role: 'USER',
     password: '',
     confirmPassword: ''
   })
@@ -38,9 +29,6 @@ const AdminDashboard = () => {
       if (activeTab === 'users') {
         const response = await api.get('/admin/users')
         setUsers(response.data.data.users)
-      } else if (activeTab === 'employees') {
-        const response = await api.get('/employees', { params: { limit: 10000 } })
-        setEmployees(response.data.data.employees)
       } else {
         const response = await api.get('/admin/upload-history')
         setUploadHistory(response.data.data.uploads)
@@ -57,7 +45,7 @@ const AdminDashboard = () => {
     try {
       await api.put(`/admin/users/${userId}`, updates)
       toast.success('User updated successfully')
-      await fetchData()
+      fetchData()
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to update user')
     }
@@ -81,41 +69,6 @@ const AdminDashboard = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }))
-  }
-
-  const handleAddUserFormChange = (e) => {
-    const { name, value } = e.target
-    setAddUserForm((prev) => ({ ...prev, [name]: value }))
-  }
-
-  const handleAddUser = async (e) => {
-    e.preventDefault()
-    if (addUserForm.password && addUserForm.password.length < 6) {
-      toast.error('Password must be at least 6 characters when provided')
-      return
-    }
-    if (addUserForm.password && addUserForm.password !== addUserForm.confirmPassword) {
-      toast.error('Passwords do not match')
-      return
-    }
-    try {
-      setSavingUser(true)
-      const payload = {
-        role: addUserForm.role
-      }
-      if (addUserForm.name.trim()) payload.name = addUserForm.name.trim()
-      if (addUserForm.email.trim()) payload.email = addUserForm.email.trim()
-      if (addUserForm.password) payload.password = addUserForm.password
-      await api.post('/admin/users', payload)
-      toast.success('User created successfully')
-      setShowAddUser(false)
-      setAddUserForm({ name: '', email: '', role: 'USER', password: '', confirmPassword: '' })
-      fetchData()
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to create user')
-    } finally {
-      setSavingUser(false)
-    }
   }
 
   const handleSaveUser = async (e) => {
@@ -155,7 +108,7 @@ const AdminDashboard = () => {
         password: '',
         confirmPassword: ''
       })
-      await fetchData()
+      fetchData()
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to update user')
     } finally {
@@ -179,12 +132,6 @@ const AdminDashboard = () => {
           User Management
         </button>
         <button
-          className={`tab ${activeTab === 'employees' ? 'active' : ''}`}
-          onClick={() => setActiveTab('employees')}
-        >
-          Employees (Uploaded)
-        </button>
-        <button
           className={`tab ${activeTab === 'history' ? 'active' : ''}`}
           onClick={() => setActiveTab('history')}
         >
@@ -194,16 +141,7 @@ const AdminDashboard = () => {
 
       {activeTab === 'users' && (
         <div className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h2 style={{ margin: 0 }}>Users</h2>
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={() => setShowAddUser(true)}
-            >
-              Add User
-            </button>
-          </div>
+          <h2>Users</h2>
           <table className="table">
             <thead>
               <tr>
@@ -255,55 +193,6 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {activeTab === 'employees' && (
-        <div className="card">
-          <h2>Employees ({employees.length} total)</h2>
-          <p style={{ marginTop: 0, color: 'var(--text-muted)', fontSize: '14px' }}>
-            All records from CSV uploads and manual entries. Switch to Dashboard to add or edit.
-          </p>
-          <div style={{ overflowX: 'auto' }}>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Phone</th>
-                  <th>Extension</th>
-                  <th>Department</th>
-                  <th>Job Title</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {employees.length === 0 ? (
-                  <tr>
-                    <td colSpan="7" style={{ textAlign: 'center', padding: '40px' }}>
-                      No employees yet. Upload a CSV or add employees from the Dashboard.
-                    </td>
-                  </tr>
-                ) : (
-                  employees.map((emp) => (
-                    <tr key={emp._id}>
-                      <td>{emp.fullName || '—'}</td>
-                      <td>{emp.email || '—'}</td>
-                      <td>{emp.phoneNumber || '—'}</td>
-                      <td>{emp.extension || '—'}</td>
-                      <td>{emp.department || '—'}</td>
-                      <td>{emp.jobTitle || '—'}</td>
-                      <td>
-                        <span className={`status-badge ${emp.status === 'active' ? 'active' : 'inactive'}`}>
-                          {emp.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
       {activeTab === 'history' && (
         <div className="card">
           <h2>Upload History</h2>
@@ -352,91 +241,6 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {showAddUser && (
-        <div className="modal">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h2>Add User</h2>
-              <button
-                className="close-btn"
-                onClick={() => setShowAddUser(false)}
-              >
-                ×
-              </button>
-            </div>
-            <form onSubmit={handleAddUser}>
-              <div className="form-group">
-                <label>Name (optional)</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={addUserForm.name}
-                  onChange={handleAddUserFormChange}
-                  placeholder="Leave blank for default"
-                />
-              </div>
-              <div className="form-group">
-                <label>Email (optional)</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={addUserForm.email}
-                  onChange={handleAddUserFormChange}
-                  placeholder="Leave blank for placeholder email"
-                />
-              </div>
-              <div className="form-group">
-                <label>Role</label>
-                <select
-                  name="role"
-                  value={addUserForm.role}
-                  onChange={handleAddUserFormChange}
-                >
-                  <option value="ADMIN">Admin</option>
-                  <option value="USER">User</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Password (optional)</label>
-                <input
-                  type="password"
-                  name="password"
-                  value={addUserForm.password}
-                  onChange={handleAddUserFormChange}
-                  placeholder="Leave blank for default password"
-                />
-              </div>
-              <div className="form-group">
-                <label>Confirm Password (optional)</label>
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  value={addUserForm.confirmPassword}
-                  onChange={handleAddUserFormChange}
-                  placeholder="Re-enter password if set"
-                />
-              </div>
-              <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={savingUser}
-                >
-                  {savingUser ? 'Creating...' : 'Create User'}
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowAddUser(false)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
       {editingUser && (
         <div className="modal">
           <div className="modal-content">
@@ -451,12 +255,13 @@ const AdminDashboard = () => {
             </div>
             <form onSubmit={handleSaveUser}>
               <div className="form-group">
-                <label>Name (optional)</label>
+                <label>Name</label>
                 <input
                   type="text"
                   name="name"
                   value={userForm.name}
                   onChange={handleUserFormChange}
+                  required
                 />
               </div>
               <div className="form-group">

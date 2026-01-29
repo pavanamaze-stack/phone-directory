@@ -28,7 +28,7 @@ const Dashboard = () => {
     setLoading(true)
     try {
       const response = await api.get('/employees', {
-        params: { limit: 10000 }
+        params: { limit: 100 }
       })
       setEmployees(response.data.data.employees)
     } catch (error) {
@@ -86,7 +86,7 @@ const Dashboard = () => {
         toast.success('Employee created successfully')
       }
       setShowModal(false)
-      await fetchEmployees()
+      fetchEmployees()
     } catch (error) {
       toast.error(error.response?.data?.message || 'Operation failed')
     }
@@ -130,7 +130,7 @@ const Dashboard = () => {
       if (response.data.data.uploadLog.errors.length > 0) {
         console.log('Errors:', response.data.data.uploadLog.errors)
       }
-      await fetchEmployees()
+      fetchEmployees()
     } catch (error) {
       toast.error(error.response?.data?.message || 'Upload failed')
     } finally {
@@ -188,12 +188,12 @@ const Dashboard = () => {
             ) : (
               employees.map((employee) => (
                 <tr key={employee._id}>
-                  <td>{employee.fullName || '—'}</td>
-                  <td>{employee.email || '—'}</td>
-                  <td>{employee.phoneNumber || '—'}</td>
-                  <td>{employee.extension || '—'}</td>
-                  <td>{employee.department || '—'}</td>
-                  <td>{employee.jobTitle || '—'}</td>
+                  <td>{employee.fullName}</td>
+                  <td>{employee.email}</td>
+                  <td>{employee.phoneNumber}</td>
+                  <td>{employee.extension || '-'}</td>
+                  <td>{employee.department}</td>
+                  <td>{employee.jobTitle || '-'}</td>
                   <td>
                     <span
                       className={`status-badge ${
@@ -239,33 +239,33 @@ const Dashboard = () => {
             </div>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label>Full Name (optional)</label>
+                <label>Full Name *</label>
                 <input
                   type="text"
                   name="fullName"
                   value={formData.fullName}
                   onChange={handleInputChange}
-                  placeholder="Leave blank if not needed"
+                  required
                 />
               </div>
               <div className="form-group">
-                <label>Email (optional)</label>
+                <label>Email *</label>
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  placeholder="Leave blank if not needed"
+                  required
                 />
               </div>
               <div className="form-group">
-                <label>Phone Number (optional)</label>
+                <label>Phone Number *</label>
                 <input
                   type="text"
                   name="phoneNumber"
                   value={formData.phoneNumber}
                   onChange={handleInputChange}
-                  placeholder="Leave blank if not needed"
+                  required
                 />
               </div>
               <div className="form-group">
@@ -278,13 +278,13 @@ const Dashboard = () => {
                 />
               </div>
               <div className="form-group">
-                <label>Department (optional)</label>
+                <label>Department *</label>
                 <input
                   type="text"
                   name="department"
                   value={formData.department}
                   onChange={handleInputChange}
-                  placeholder="Leave blank if not needed"
+                  required
                 />
               </div>
               <div className="form-group">

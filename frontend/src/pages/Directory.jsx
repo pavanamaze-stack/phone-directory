@@ -312,32 +312,24 @@ const Directory = () => {
                     <td className="employee-name">
                       <div className="name-avatar">
                         <div className="avatar-circle">
-                          {(employee.fullName && employee.fullName.charAt(0)) ? employee.fullName.charAt(0).toUpperCase() : '—'}
+                          {employee.fullName.charAt(0).toUpperCase()}
                         </div>
-                        <span>{employee.fullName || '—'}</span>
+                        <span>{employee.fullName}</span>
                       </div>
                     </td>
                     <td>
-                      {employee.email ? (
-                        <a href={`mailto:${employee.email}`} className="email-link">
-                          {employee.email}
-                        </a>
-                      ) : (
-                        <span>—</span>
-                      )}
+                      <a href={`mailto:${employee.email}`} className="email-link">
+                        {employee.email}
+                      </a>
                     </td>
                     <td>
-                      {employee.phoneNumber ? (
-                        <a href={`tel:${employee.phoneNumber}`} className="phone-link">
-                          {employee.phoneNumber}
-                        </a>
-                      ) : (
-                        <span>—</span>
-                      )}
+                      <a href={`tel:${employee.phoneNumber}`} className="phone-link">
+                        {employee.phoneNumber}
+                      </a>
                     </td>
-                    <td className="extension-cell">{employee.extension || '—'}</td>
+                    <td className="extension-cell">{employee.extension || '-'}</td>
                     <td>
-                      <span className="department-badge">{employee.department || '—'}</span>
+                      <span className="department-badge">{employee.department}</span>
                     </td>
                     <td className="job-title-cell">{employee.jobTitle || '-'}</td>
                     <td>
