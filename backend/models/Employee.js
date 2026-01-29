@@ -3,16 +3,14 @@ const mongoose = require('mongoose');
 const employeeSchema = new mongoose.Schema({
   fullName: {
     type: String,
-    required: false,
+    required: [true, 'Full name is required'],
     trim: true,
-    index: true,
-    default: ''
+    index: true
   },
   email: {
     type: String,
-    required: false,
+    required: [true, 'Email is required'],
     unique: true,
-    sparse: true,
     lowercase: true,
     trim: true,
     match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email'],
@@ -20,10 +18,9 @@ const employeeSchema = new mongoose.Schema({
   },
   phoneNumber: {
     type: String,
-    required: false,
+    required: [true, 'Phone number is required'],
     trim: true,
-    index: true,
-    default: ''
+    index: true
   },
   extension: {
     type: String,
@@ -31,10 +28,9 @@ const employeeSchema = new mongoose.Schema({
   },
   department: {
     type: String,
-    required: false,
+    required: [true, 'Department is required'],
     trim: true,
-    index: true,
-    default: ''
+    index: true
   },
   jobTitle: {
     type: String,

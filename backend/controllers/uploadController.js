@@ -1,53 +1,44 @@
 const csv = require('csv-parser');
 const fs = require('fs');
+const path = require('path');
 const Employee = require('../models/Employee');
 const UploadLog = require('../models/UploadLog');
+const Joi = require('joi');
 
-// Map common CSV header variations to schema keys. No mandatory fields – only columns with data are used.
-const HEADER_MAP = {
-  fullname: 'fullName', 'full name': 'fullName', fullName: 'fullName', name: 'fullName',
-  email: 'email', 'e-mail': 'email', mail: 'email',
-  phonenumber: 'phoneNumber', 'phone number': 'phoneNumber', phone: 'phoneNumber', phoneNumber: 'phoneNumber', tel: 'phoneNumber',
-  extension: 'extension', ext: 'extension',
-  department: 'department', dept: 'department',
-  jobtitle: 'jobTitle', 'job title': 'jobTitle', jobTitle: 'jobTitle', title: 'jobTitle',
-  officelocation: 'officeLocation', 'office location': 'officeLocation', officeLocation: 'officeLocation', location: 'officeLocation',
-  status: 'status'
-};
-
-const normalizeRowKeys = (row) => {
-  const out = {};
-  for (const [key, val] of Object.entries(row)) {
-    const k = (key && key.trim()) || '';
-    if (k === '') continue;
-    const normalized = HEADER_MAP[k.toLowerCase()] || k;
-    out[normalized] = val;
-  }
-  return out;
-};
+// CSV row validation schema
+const employeeSchema = Joi.object({
+  fullName: Joi.string().trim().required().messages({
+    'string.empty': 'Full name is required',
+    'any.required': 'Full name is required'
+  }),
+  email: Joi.string().email().trim().lowercase().required().messages({
+    'string.email': 'Invalid email format',
+    'string.empty': 'Email is required',
+    'any.required': 'Email is required'
+  }),
+  phoneNumber: Joi.string().trim().required().messages({
+    'string.empty': 'Phone number is required',
+    'any.required': 'Phone number is required'
+  }),
+  extension: Joi.string().trim().allow(''),
+  department: Joi.string().trim().required().messages({
+    'string.empty': 'Department is required',
+    'any.required': 'Department is required'
+  }),
+  jobTitle: Joi.string().trim().allow(''),
+  officeLocation: Joi.string().trim().allow(''),
+  status: Joi.string().valid('active', 'inactive').default('active')
+});
 
 // Sanitize input to prevent CSV injection
 const sanitizeInput = (value) => {
-  if (value == null) return '';
-  if (typeof value !== 'string') return String(value).trim();
+  if (typeof value !== 'string') return value;
+  // Remove potentially dangerous characters that could lead to CSV injection
   const dangerousChars = ['=', '+', '-', '@', '\t', '\r'];
-  let s = value.trim();
-  if (dangerousChars.some(char => s.startsWith(char))) {
-    s = s.replace(/^[=+\-@\t\r]/, '');
+  if (dangerousChars.some(char => value.startsWith(char))) {
+    return value.replace(/^[=+\-@\t\r]/, '');
   }
-  return s;
-};
-
-// Build employee object from row: only include columns that have non-empty values. No validation – empty fields ignored.
-const rowToEmployee = (normalizedRow) => {
-  const sanitized = {};
-  Object.keys(normalizedRow).forEach(key => {
-    const val = sanitizeInput(normalizedRow[key]);
-    if (val !== '') sanitized[key] = val;
-  });
-  if (!sanitized.status) sanitized.status = 'active';
-  if (sanitized.status !== 'active' && sanitized.status !== 'inactive') sanitized.status = 'active';
-  return sanitized;
+  return value.trim();
 };
 
 // @desc    Upload CSV file
@@ -64,6 +55,7 @@ exports.uploadCSV = async (req, res, next) => {
 
     const filePath = req.file.path;
     const results = [];
+    const errors = [];
     let rowNumber = 0;
 
     // Read and parse CSV file
@@ -72,45 +64,58 @@ exports.uploadCSV = async (req, res, next) => {
         .pipe(csv())
         .on('data', async (row) => {
           rowNumber++;
-          const normalizedRow = normalizeRowKeys(row);
-          const employeeData = rowToEmployee(normalizedRow);
-          const keys = Object.keys(employeeData);
-          const hasUserInfo = keys.some(k => k !== 'status') || (keys.length === 1 && keys[0] !== 'status');
-          if (hasUserInfo) results.push(employeeData);
+          
+          // Sanitize all values
+          const sanitizedRow = {};
+          Object.keys(row).forEach(key => {
+            sanitizedRow[key.trim()] = sanitizeInput(row[key]);
+          });
+
+          // Validate row
+          const { error, value } = employeeSchema.validate(sanitizedRow, {
+            abortEarly: false
+          });
+
+          if (error) {
+            errors.push({
+              row: rowNumber,
+              message: error.details.map(d => d.message).join(', '),
+              data: sanitizedRow
+            });
+          } else {
+            results.push(value);
+          }
         })
         .on('end', async () => {
           try {
+            // Delete the uploaded file
             fs.unlinkSync(filePath);
 
             let successfulRows = 0;
-            let failedRows = 0;
+            let failedRows = errors.length;
             const upsertErrors = [];
 
-            // Save each row: only columns with data are used. No mandatory checks. runValidators: false so format (e.g. email) is not enforced.
-            for (let i = 0; i < results.length; i++) {
-              const employeeData = results[i];
+            // Bulk upsert employees (update if exists, insert if not)
+            for (const employeeData of results) {
               try {
-                if (employeeData.email) {
-                  await Employee.findOneAndUpdate(
-                    { email: employeeData.email },
-                    employeeData,
-                    { upsert: true, new: true, runValidators: false }
-                  );
-                } else {
-                  await Employee.create(employeeData, { runValidators: false });
-                }
+                await Employee.findOneAndUpdate(
+                  { email: employeeData.email },
+                  employeeData,
+                  { upsert: true, new: true, runValidators: true }
+                );
                 successfulRows++;
               } catch (err) {
                 failedRows++;
                 upsertErrors.push({
-                  row: i + 1,
+                  row: results.indexOf(employeeData) + 1,
                   message: err.message,
                   data: employeeData
                 });
               }
             }
 
-            const allErrors = upsertErrors;
+            // Combine validation errors with upsert errors
+            const allErrors = [...errors, ...upsertErrors];
 
             // Create upload log
             const uploadLog = await UploadLog.create({
