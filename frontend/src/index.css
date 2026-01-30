@@ -24,6 +24,13 @@ code {
   padding: 0 20px;
 }
 
+.container--full-width {
+  max-width: none;
+  width: 100%;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
 .btn {
   padding: 10px 20px;
   border: none;
@@ -123,11 +130,12 @@ code {
   padding: 12px;
   text-align: left;
   border-bottom: 1px solid #ddd;
+  font-weight: bold;
 }
 
 .table th {
   background-color: #f8f9fa;
-  font-weight: 600;
+  font-weight: 700;
   color: #333;
 }
 

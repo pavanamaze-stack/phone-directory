@@ -20,6 +20,8 @@ const Layout = () => {
     return location.pathname === path || location.pathname.startsWith(path + '/')
   }
 
+  const isFullWidthPage = ['/directory', '/dashboard', '/admin'].includes(location.pathname)
+
   useEffect(() => {
     setIsMobileMenuOpen(false)
   }, [location.pathname])
@@ -104,7 +106,7 @@ const Layout = () => {
         </div>
       </nav>
       <main className="main-content">
-        <div className="container">
+        <div className={`container ${isFullWidthPage ? 'container--full-width' : ''}`}>
           <Outlet />
         </div>
       </main>

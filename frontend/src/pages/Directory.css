@@ -1,4 +1,6 @@
 .directory {
+  width: 100%;
+  max-width: 100%;
   padding: 0;
   animation: fadeIn 0.4s ease-out;
 }
@@ -452,6 +454,8 @@
 }
 
 .table-card {
+  width: 100%;
+  max-width: 100%;
   background: white;
   border-radius: 16px;
   padding: 24px;
@@ -461,6 +465,7 @@
 }
 
 .table-container {
+  width: 100%;
   overflow-x: auto;
   position: relative;
 }
@@ -492,7 +497,7 @@
 .directory-table th {
   padding: 16px;
   text-align: left;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -554,6 +559,7 @@
   border-bottom: 1px solid #f3f4f6;
   color: #374151;
   font-size: 14px;
+  font-weight: bold;
 }
 
 .employee-name {

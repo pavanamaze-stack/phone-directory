@@ -1,3 +1,19 @@
+.admin-dashboard {
+  width: 100%;
+  max-width: 100%;
+}
+
+.admin-dashboard .card {
+  width: 100%;
+  max-width: 100%;
+}
+
+.admin-dashboard .table,
+.admin-dashboard .table th,
+.admin-dashboard .table td {
+  font-weight: bold;
+}
+
 .admin-dashboard h1 {
   margin-bottom: 30px;
   color: #333;
