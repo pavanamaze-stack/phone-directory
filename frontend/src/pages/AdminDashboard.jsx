@@ -5,6 +5,7 @@ import './AdminDashboard.css'
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([])
+  const [employees, setEmployees] = useState([])
   const [uploadHistory, setUploadHistory] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('users')
@@ -29,6 +30,9 @@ const AdminDashboard = () => {
       if (activeTab === 'users') {
         const response = await api.get('/admin/users')
         setUsers(response.data.data.users)
+      } else if (activeTab === 'employees') {
+        const response = await api.get('/employees', { params: { limit: 10000 } })
+        setEmployees(response.data.data.employees)
       } else {
         const response = await api.get('/admin/upload-history')
         setUploadHistory(response.data.data.uploads)
@@ -39,6 +43,28 @@ const AdminDashboard = () => {
     } finally {
       setLoading(false)
     }
+  }
+
+  const exportEmployeesAsCsv = () => {
+    const headers = ['fullName', 'email', 'phoneNumber', 'extension', 'department', 'jobTitle', 'officeLocation', 'status']
+    const escape = (v) => {
+      const s = v == null ? '' : String(v)
+      if (s.includes(',') || s.includes('"') || s.includes('\n')) return `"${s.replace(/"/g, '""')}"`
+      return s
+    }
+    const rows = [headers.join(',')]
+    employees.forEach((emp) => {
+      rows.push(headers.map((h) => escape(emp[h])).join(','))
+    })
+    const csv = rows.join('\r\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `employees-export-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.success('Employees exported as CSV')
   }
 
   const handleUserUpdate = async (userId, updates) => {
@@ -132,6 +158,12 @@ const AdminDashboard = () => {
           User Management
         </button>
         <button
+          className={`tab ${activeTab === 'employees' ? 'active' : ''}`}
+          onClick={() => setActiveTab('employees')}
+        >
+          Manage Employees
+        </button>
+        <button
           className={`tab ${activeTab === 'history' ? 'active' : ''}`}
           onClick={() => setActiveTab('history')}
         >
@@ -190,6 +222,64 @@ const AdminDashboard = () => {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {activeTab === 'employees' && (
+        <div className="card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+            <h2 style={{ margin: 0 }}>Manage Employees</h2>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={exportEmployeesAsCsv}
+                disabled={employees.length === 0}
+              >
+                Export CSV
+              </button>
+            </div>
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Extension</th>
+                  <th>Department</th>
+                  <th>Job Title</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {employees.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" style={{ textAlign: 'center', padding: '40px' }}>
+                      No employees yet. Upload a CSV from the Dashboard or add manually.
+                    </td>
+                  </tr>
+                ) : (
+                  employees.map((emp) => (
+                    <tr key={emp._id}>
+                      <td>{emp.fullName || '—'}</td>
+                      <td>{emp.email || '—'}</td>
+                      <td>{emp.phoneNumber || '—'}</td>
+                      <td>{emp.extension || '—'}</td>
+                      <td>{emp.department || '—'}</td>
+                      <td>{emp.jobTitle || '—'}</td>
+                      <td>
+                        <span className={`status-badge ${emp.status === 'active' ? 'active' : 'inactive'}`}>
+                          {emp.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
