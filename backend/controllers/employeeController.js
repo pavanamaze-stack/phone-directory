@@ -6,7 +6,8 @@ const Employee = require('../models/Employee');
 exports.getEmployees = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const requestedLimit = parseInt(req.query.limit);
+    const limit = requestedLimit > 0 ? Math.min(requestedLimit, 100000) : 10;
     const skip = (page - 1) * limit;
 
     // Build query

@@ -20,10 +20,17 @@ const AdminDashboard = () => {
   })
   const [savingUser, setSavingUser] = useState(false)
   const [uploadingCsv, setUploadingCsv] = useState(false)
+  const [employeeSearch, setEmployeeSearch] = useState('')
+  const [employeeSearchDebounced, setEmployeeSearchDebounced] = useState('')
+
+  useEffect(() => {
+    const t = setTimeout(() => setEmployeeSearchDebounced(employeeSearch), 350)
+    return () => clearTimeout(t)
+  }, [employeeSearch])
 
   useEffect(() => {
     fetchData()
-  }, [activeTab])
+  }, [activeTab, employeeSearchDebounced])
 
   const fetchData = async () => {
     setLoading(true)
@@ -32,7 +39,9 @@ const AdminDashboard = () => {
         const response = await api.get('/admin/users')
         setUsers(response.data.data.users)
       } else if (activeTab === 'employees') {
-        const response = await api.get('/employees', { params: { limit: 10000 } })
+        const params = { limit: 100000 }
+        if (employeeSearchDebounced.trim()) params.search = employeeSearchDebounced.trim()
+        const response = await api.get('/employees', { params })
         setEmployees(response.data.data.employees)
       } else {
         const response = await api.get('/admin/upload-history')
@@ -272,6 +281,25 @@ const AdminDashboard = () => {
                 Export CSV
               </button>
             </div>
+          </div>
+          <div style={{ marginBottom: '16px' }}>
+            <input
+              type="text"
+              placeholder="Search by name, email, phone, ext, job title..."
+              value={employeeSearch}
+              onChange={(e) => setEmployeeSearch(e.target.value)}
+              style={{
+                width: '100%',
+                maxWidth: '400px',
+                padding: '10px 14px',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                fontSize: '14px'
+              }}
+            />
+            <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#666' }}>
+              Showing all uploaded data (no limit). {employees.length} employee{employees.length !== 1 ? 's' : ''} listed.
+            </p>
           </div>
           <div style={{ overflowX: 'auto' }}>
             <table className="table">
