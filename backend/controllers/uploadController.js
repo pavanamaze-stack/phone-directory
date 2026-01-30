@@ -1,5 +1,6 @@
 const csv = require('csv-parser');
 const fs = require('fs');
+const path = require('path');
 const Employee = require('../models/Employee');
 const UploadLog = require('../models/UploadLog');
 
@@ -36,7 +37,7 @@ const sanitizeInput = (value) => {
   return s;
 };
 
-// Build employee object from row: only include columns that have non-empty values. No required fields. Missing columns ignored.
+// Build employee object from row: only include columns that have non-empty values. No required fields.
 const rowToEmployee = (normalizedRow) => {
   const out = {};
   for (const [key, val] of Object.entries(normalizedRow)) {
@@ -48,7 +49,7 @@ const rowToEmployee = (normalizedRow) => {
   return out;
 };
 
-// @desc    Upload CSV file – all columns optional; works when any or all columns are missing
+// @desc    Upload CSV file – all columns optional; data is saved and will show in dashboard / manage employees
 // @route   POST /api/upload/csv
 // @access  Private/Admin
 exports.uploadCSV = async (req, res, next) => {

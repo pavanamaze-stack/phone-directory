@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-// All columns optional – no required field validation
+// All columns optional so CSV upload and manual add work with empty fields
 const employeeSchema = new mongoose.Schema({
   fullName: {
     type: String,

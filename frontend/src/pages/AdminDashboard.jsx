@@ -19,6 +19,7 @@ const AdminDashboard = () => {
     confirmPassword: ''
   })
   const [savingUser, setSavingUser] = useState(false)
+  const [uploadingCsv, setUploadingCsv] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -42,6 +43,28 @@ const AdminDashboard = () => {
       console.error('Error:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleCsvUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      toast.error('Please upload a CSV file')
+      return
+    }
+    const formData = new FormData()
+    formData.append('file', file)
+    setUploadingCsv(true)
+    try {
+      const res = await api.post('/upload/csv', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+      toast.success(`Upload: ${res.data.data.uploadLog.successfulRows} successful, ${res.data.data.uploadLog.failedRows} failed`)
+      await fetchData()
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Upload failed')
+    } finally {
+      setUploadingCsv(false)
+      e.target.value = ''
     }
   }
 
@@ -230,6 +253,16 @@ const AdminDashboard = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
             <h2 style={{ margin: 0 }}>Manage Employees</h2>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <label className="btn btn-secondary" style={{ marginBottom: 0 }}>
+                {uploadingCsv ? 'Uploading...' : 'Upload CSV'}
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={handleCsvUpload}
+                  style={{ display: 'none' }}
+                  disabled={uploadingCsv}
+                />
+              </label>
               <button
                 type="button"
                 className="btn btn-primary"

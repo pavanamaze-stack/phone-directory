@@ -130,7 +130,7 @@ const Dashboard = () => {
       if (response.data.data.uploadLog.errors.length > 0) {
         console.log('Errors:', response.data.data.uploadLog.errors)
       }
-      fetchEmployees()
+      await fetchEmployees()
     } catch (error) {
       toast.error(error.response?.data?.message || 'Upload failed')
     } finally {
@@ -239,33 +239,33 @@ const Dashboard = () => {
             </div>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label>Full Name (optional)</label>
+                <label>Full Name *</label>
                 <input
                   type="text"
                   name="fullName"
                   value={formData.fullName}
                   onChange={handleInputChange}
-                  placeholder="Leave blank if not needed"
+                  required
                 />
               </div>
               <div className="form-group">
-                <label>Email (optional)</label>
+                <label>Email *</label>
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  placeholder="Leave blank if not needed"
+                  required
                 />
               </div>
               <div className="form-group">
-                <label>Phone Number (optional)</label>
+                <label>Phone Number *</label>
                 <input
                   type="text"
                   name="phoneNumber"
                   value={formData.phoneNumber}
                   onChange={handleInputChange}
-                  placeholder="Leave blank if not needed"
+                  required
                 />
               </div>
               <div className="form-group">
@@ -278,13 +278,13 @@ const Dashboard = () => {
                 />
               </div>
               <div className="form-group">
-                <label>Department (optional)</label>
+                <label>Department *</label>
                 <input
                   type="text"
                   name="department"
                   value={formData.department}
                   onChange={handleInputChange}
-                  placeholder="Leave blank if not needed"
+                  required
                 />
               </div>
               <div className="form-group">
