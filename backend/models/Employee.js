@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 // Fields: Name, Email, Phone, Ext Number, Direct Contact (DC), Job Title, Status – all optional.
-// Email: partial unique index – uniqueness only when a non-empty email exists; null/empty/missing allowed (multiple records).
+// No unique constraint on email – records can be saved with empty or duplicated email.
 const employeeSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -54,17 +54,5 @@ const employeeSchema = new mongoose.Schema({
 
 employeeSchema.index({ status: 1 });
 employeeSchema.index({ name: 'text', email: 'text', jobTitle: 'text' });
-
-// Partial unique index: only index documents that have a non-empty email; enforce uniqueness only then.
-// Documents with null, missing, or empty email are not in this index, so multiple such records are allowed.
-employeeSchema.index(
-  { email: 1 },
-  {
-    unique: true,
-    partialFilterExpression: {
-      email: { $exists: true, $type: 'string', $gt: '' }
-    }
-  }
-);
 
 module.exports = mongoose.model('Employee', employeeSchema);
