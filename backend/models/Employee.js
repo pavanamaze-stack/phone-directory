@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 
-// All columns optional so CSV upload and manual add work with empty fields
+// Fields: Name, Email, Phone, Ext Number, Direct Contact (DC), Job Title, Status – all optional
 const employeeSchema = new mongoose.Schema({
-  fullName: {
+  name: {
     type: String,
     required: false,
     trim: true,
@@ -18,31 +18,30 @@ const employeeSchema = new mongoose.Schema({
     trim: true,
     index: true
   },
-  phoneNumber: {
+  phone: {
     type: String,
     required: false,
     trim: true,
     index: true,
     default: ''
   },
-  extension: {
-    type: String,
-    trim: true
-  },
-  department: {
+  extNumber: {
     type: String,
     required: false,
     trim: true,
-    index: true,
+    default: ''
+  },
+  directContact: {
+    type: String,
+    required: false,
+    trim: true,
     default: ''
   },
   jobTitle: {
     type: String,
-    trim: true
-  },
-  officeLocation: {
-    type: String,
-    trim: true
+    required: false,
+    trim: true,
+    default: ''
   },
   status: {
     type: String,
@@ -54,7 +53,7 @@ const employeeSchema = new mongoose.Schema({
   timestamps: true
 });
 
-employeeSchema.index({ department: 1, status: 1 });
-employeeSchema.index({ fullName: 'text', email: 'text', department: 'text' });
+employeeSchema.index({ status: 1 });
+employeeSchema.index({ name: 'text', email: 'text', jobTitle: 'text' });
 
 module.exports = mongoose.model('Employee', employeeSchema);

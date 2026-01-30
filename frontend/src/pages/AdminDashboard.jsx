@@ -69,7 +69,7 @@ const AdminDashboard = () => {
   }
 
   const exportEmployeesAsCsv = () => {
-    const headers = ['fullName', 'email', 'phoneNumber', 'extension', 'department', 'jobTitle', 'officeLocation', 'status']
+    const headers = ['name', 'email', 'phone', 'extNumber', 'directContact', 'jobTitle', 'status']
     const escape = (v) => {
       const s = v == null ? '' : String(v)
       if (s.includes(',') || s.includes('"') || s.includes('\n')) return `"${s.replace(/"/g, '""')}"`
@@ -280,8 +280,8 @@ const AdminDashboard = () => {
                   <th>Name</th>
                   <th>Email</th>
                   <th>Phone</th>
-                  <th>Extension</th>
-                  <th>Department</th>
+                  <th>Ext Number</th>
+                  <th>Direct Contact (DC)</th>
                   <th>Job Title</th>
                   <th>Status</th>
                 </tr>
@@ -296,11 +296,11 @@ const AdminDashboard = () => {
                 ) : (
                   employees.map((emp) => (
                     <tr key={emp._id}>
-                      <td>{emp.fullName || '—'}</td>
+                      <td>{(emp.name || emp.fullName) || '—'}</td>
                       <td>{emp.email || '—'}</td>
-                      <td>{emp.phoneNumber || '—'}</td>
-                      <td>{emp.extension || '—'}</td>
-                      <td>{emp.department || '—'}</td>
+                      <td>{(emp.phone || emp.phoneNumber) || '—'}</td>
+                      <td>{(emp.extNumber || emp.extension) || '—'}</td>
+                      <td>{emp.directContact || '—'}</td>
                       <td>{emp.jobTitle || '—'}</td>
                       <td>
                         <span className={`status-badge ${emp.status === 'active' ? 'active' : 'inactive'}`}>

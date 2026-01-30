@@ -1,11 +1,11 @@
-fullName,email,phoneNumber,extension,department,jobTitle,officeLocation,status
-John Doe,john.doe@company.com,555-0101,101,Engineering,Software Engineer,Office A,active
-Jane Smith,jane.smith@company.com,555-0102,102,Marketing,Marketing Manager,Office B,active
-Bob Johnson,bob.johnson@company.com,555-0103,103,HR,HR Manager,Office A,active
-Alice Williams,alice.williams@company.com,555-0104,104,Sales,Sales Representative,Office C,active
-Charlie Brown,charlie.brown@company.com,555-0105,105,Engineering,Senior Developer,Office A,active
-Diana Prince,diana.prince@company.com,555-0106,106,Finance,Financial Analyst,Office B,active
-Frank Miller,frank.miller@company.com,555-0107,107,IT,IT Support Specialist,Office A,active
-Grace Lee,grace.lee@company.com,555-0108,108,Marketing,Content Writer,Office B,active
-Henry Davis,henry.davis@company.com,555-0109,109,Sales,Sales Manager,Office C,active
-Ivy Wilson,ivy.wilson@company.com,555-0110,110,HR,Recruiter,Office A,active
+name,email,phone,extNumber,directContact,jobTitle,status
+John Doe,john.doe@company.com,555-0101,101,,Software Engineer,active
+Jane Smith,jane.smith@company.com,555-0102,102,,Marketing Manager,active
+Bob Johnson,bob.johnson@company.com,555-0103,103,,HR Manager,active
+Alice Williams,alice.williams@company.com,555-0104,104,,Sales Representative,active
+Charlie Brown,charlie.brown@company.com,555-0105,105,,Senior Developer,active
+Diana Prince,diana.prince@company.com,555-0106,106,,Financial Analyst,active
+Frank Miller,frank.miller@company.com,555-0107,107,,IT Support Specialist,active
+Grace Lee,grace.lee@company.com,555-0108,108,,Content Writer,active
+Henry Davis,henry.davis@company.com,555-0109,109,,Sales Manager,active
+Ivy Wilson,ivy.wilson@company.com,555-0110,110,,Recruiter,active

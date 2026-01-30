@@ -1,18 +1,16 @@
 const csv = require('csv-parser');
 const fs = require('fs');
-const path = require('path');
 const Employee = require('../models/Employee');
 const UploadLog = require('../models/UploadLog');
 
-// All columns optional – map common CSV header variations to schema keys
+// Fields: Name, Email, Phone, Ext Number, Direct Contact (DC), Job Title, Status – all optional
 const HEADER_MAP = {
-  fullname: 'fullName', 'full name': 'fullName', fullName: 'fullName', name: 'fullName',
+  name: 'name', fullname: 'name', 'full name': 'name', fullName: 'name',
   email: 'email', 'e-mail': 'email', mail: 'email',
-  phonenumber: 'phoneNumber', 'phone number': 'phoneNumber', phone: 'phoneNumber', phoneNumber: 'phoneNumber', tel: 'phoneNumber',
-  extension: 'extension', ext: 'extension',
-  department: 'department', dept: 'department',
+  phone: 'phone', phonenumber: 'phone', 'phone number': 'phone', phoneNumber: 'phone', tel: 'phone',
+  extnumber: 'extNumber', 'ext number': 'extNumber', extension: 'extNumber', ext: 'extNumber',
+  directcontact: 'directContact', 'direct contact': 'directContact', 'direct contact (dc)': 'directContact', dc: 'directContact',
   jobtitle: 'jobTitle', 'job title': 'jobTitle', jobTitle: 'jobTitle', title: 'jobTitle',
-  officelocation: 'officeLocation', 'office location': 'officeLocation', officeLocation: 'officeLocation', location: 'officeLocation',
   status: 'status'
 };
 

@@ -9,13 +9,12 @@ const Dashboard = () => {
   const [showModal, setShowModal] = useState(false)
   const [editingEmployee, setEditingEmployee] = useState(null)
   const [formData, setFormData] = useState({
-    fullName: '',
+    name: '',
     email: '',
-    phoneNumber: '',
-    extension: '',
-    department: '',
+    phone: '',
+    extNumber: '',
+    directContact: '',
     jobTitle: '',
-    officeLocation: '',
     status: 'active'
   })
   const [uploading, setUploading] = useState(false)
@@ -28,7 +27,7 @@ const Dashboard = () => {
     setLoading(true)
     try {
       const response = await api.get('/employees', {
-        params: { limit: 100 }
+        params: { limit: 10000 }
       })
       setEmployees(response.data.data.employees)
     } catch (error) {
@@ -48,13 +47,12 @@ const Dashboard = () => {
   const handleCreate = () => {
     setEditingEmployee(null)
     setFormData({
-      fullName: '',
+      name: '',
       email: '',
-      phoneNumber: '',
-      extension: '',
-      department: '',
+      phone: '',
+      extNumber: '',
+      directContact: '',
       jobTitle: '',
-      officeLocation: '',
       status: 'active'
     })
     setShowModal(true)
@@ -63,14 +61,13 @@ const Dashboard = () => {
   const handleEdit = (employee) => {
     setEditingEmployee(employee)
     setFormData({
-      fullName: employee.fullName,
-      email: employee.email,
-      phoneNumber: employee.phoneNumber,
-      extension: employee.extension || '',
-      department: employee.department,
-      jobTitle: employee.jobTitle || '',
-      officeLocation: employee.officeLocation || '',
-      status: employee.status
+      name: (employee.name || employee.fullName) ?? '',
+      email: employee.email ?? '',
+      phone: (employee.phone || employee.phoneNumber) ?? '',
+      extNumber: (employee.extNumber || employee.extension) ?? '',
+      directContact: employee.directContact ?? '',
+      jobTitle: employee.jobTitle ?? '',
+      status: employee.status ?? 'active'
     })
     setShowModal(true)
   }
@@ -171,8 +168,8 @@ const Dashboard = () => {
               <th>Name</th>
               <th>Email</th>
               <th>Phone</th>
-              <th>Extension</th>
-              <th>Department</th>
+              <th>Ext Number</th>
+              <th>Direct Contact (DC)</th>
               <th>Job Title</th>
               <th>Status</th>
               <th>Actions</th>
@@ -188,12 +185,12 @@ const Dashboard = () => {
             ) : (
               employees.map((employee) => (
                 <tr key={employee._id}>
-                  <td>{employee.fullName}</td>
-                  <td>{employee.email}</td>
-                  <td>{employee.phoneNumber}</td>
-                  <td>{employee.extension || '-'}</td>
-                  <td>{employee.department}</td>
-                  <td>{employee.jobTitle || '-'}</td>
+                  <td>{(employee.name || employee.fullName) || '—'}</td>
+                  <td>{employee.email || '—'}</td>
+                  <td>{(employee.phone || employee.phoneNumber) || '—'}</td>
+                  <td>{(employee.extNumber || employee.extension) || '—'}</td>
+                  <td>{employee.directContact || '—'}</td>
+                  <td>{employee.jobTitle || '—'}</td>
                   <td>
                     <span
                       className={`status-badge ${
@@ -239,70 +236,63 @@ const Dashboard = () => {
             </div>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label>Full Name *</label>
+                <label>Name (optional)</label>
                 <input
                   type="text"
-                  name="fullName"
-                  value={formData.fullName}
+                  name="name"
+                  value={formData.name}
                   onChange={handleInputChange}
-                  required
+                  placeholder="Leave blank if not needed"
                 />
               </div>
               <div className="form-group">
-                <label>Email *</label>
+                <label>Email (optional)</label>
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  required
+                  placeholder="Leave blank if not needed"
                 />
               </div>
               <div className="form-group">
-                <label>Phone Number *</label>
+                <label>Phone (optional)</label>
                 <input
                   type="text"
-                  name="phoneNumber"
-                  value={formData.phoneNumber}
+                  name="phone"
+                  value={formData.phone}
                   onChange={handleInputChange}
-                  required
+                  placeholder="Leave blank if not needed"
                 />
               </div>
               <div className="form-group">
-                <label>Extension</label>
+                <label>Ext Number (optional)</label>
                 <input
                   type="text"
-                  name="extension"
-                  value={formData.extension}
+                  name="extNumber"
+                  value={formData.extNumber}
                   onChange={handleInputChange}
+                  placeholder="Leave blank if not needed"
                 />
               </div>
               <div className="form-group">
-                <label>Department *</label>
+                <label>Direct Contact (DC) (optional)</label>
                 <input
                   type="text"
-                  name="department"
-                  value={formData.department}
+                  name="directContact"
+                  value={formData.directContact}
                   onChange={handleInputChange}
-                  required
+                  placeholder="Leave blank if not needed"
                 />
               </div>
               <div className="form-group">
-                <label>Job Title</label>
+                <label>Job Title (optional)</label>
                 <input
                   type="text"
                   name="jobTitle"
                   value={formData.jobTitle}
                   onChange={handleInputChange}
-                />
-              </div>
-              <div className="form-group">
-                <label>Office Location</label>
-                <input
-                  type="text"
-                  name="officeLocation"
-                  value={formData.officeLocation}
-                  onChange={handleInputChange}
+                  placeholder="Leave blank if not needed"
                 />
               </div>
               <div className="form-group">

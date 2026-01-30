@@ -9,7 +9,7 @@ const Directory = () => {
   const [search, setSearch] = useState('')
   const [department, setDepartment] = useState('')
   const [status, setStatus] = useState('')
-  const [sort, setSort] = useState('fullName')
+  const [sort, setSort] = useState('name')
   const [order, setOrder] = useState('asc')
   const [page, setPage] = useState(1)
   const [pagination, setPagination] = useState({})
@@ -42,7 +42,7 @@ const Directory = () => {
         order
       }
       if (search) params.search = search
-      if (department) params.department = department
+      if (department) params.jobTitle = department
       if (status) params.status = status
 
       const response = await api.get('/employees', { params })
@@ -168,7 +168,7 @@ const Directory = () => {
           </svg>
           <input
             type="text"
-            placeholder="Search by name, email, phone, or department..."
+            placeholder="Search by name, email, phone, job title..."
             value={search}
             onChange={handleSearch}
             className="search-input"
@@ -195,7 +195,7 @@ const Directory = () => {
               onChange={(e) => handleFilterChange('department', e.target.value)}
               className="filter-select"
             >
-              <option value="">All Departments</option>
+              <option value="">All Job Titles</option>
               {departments.map((dept) => (
                 <option key={dept} value={dept}>
                   {dept}
@@ -230,10 +230,10 @@ const Directory = () => {
           <table className="directory-table">
             <thead>
               <tr>
-                <th onClick={() => handleSort('fullName')} className="sortable">
+                <th onClick={() => handleSort('name')} className="sortable">
                   <div className="th-content">
                     <span>Name</span>
-                    {sort === 'fullName' && (
+                    {sort === 'name' && (
                       <svg className="sort-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         {order === 'asc' ? (
                           <path d="M7 14l5-5 5 5H7z" fill="currentColor"/>
@@ -265,13 +265,18 @@ const Directory = () => {
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" fill="currentColor"/>
                     </svg>
-                    <span>Extension</span>
+                    <span>Ext Number</span>
                   </div>
                 </th>
-                <th onClick={() => handleSort('department')} className="sortable">
+                <th>
                   <div className="th-content">
-                    <span>Department</span>
-                    {sort === 'department' && (
+                    <span>Direct Contact (DC)</span>
+                  </div>
+                </th>
+                <th onClick={() => handleSort('jobTitle')} className="sortable">
+                  <div className="th-content">
+                    <span>Job Title</span>
+                    {sort === 'jobTitle' && (
                       <svg className="sort-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         {order === 'asc' ? (
                           <path d="M7 14l5-5 5 5H7z" fill="currentColor"/>
@@ -280,14 +285,6 @@ const Directory = () => {
                         )}
                       </svg>
                     )}
-                  </div>
-                </th>
-                <th>
-                  <div className="th-content">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 00-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20v6z" fill="currentColor"/>
-                    </svg>
-                    <span>Job Title</span>
                   </div>
                 </th>
                 <th>Status</th>
@@ -312,26 +309,32 @@ const Directory = () => {
                     <td className="employee-name">
                       <div className="name-avatar">
                         <div className="avatar-circle">
-                          {employee.fullName.charAt(0).toUpperCase()}
+                          {((employee.name || employee.fullName) && (employee.name || employee.fullName).charAt(0)) ? (employee.name || employee.fullName).charAt(0).toUpperCase() : '—'}
                         </div>
-                        <span>{employee.fullName}</span>
+                        <span>{(employee.name || employee.fullName) || '—'}</span>
                       </div>
                     </td>
                     <td>
-                      <a href={`mailto:${employee.email}`} className="email-link">
-                        {employee.email}
-                      </a>
+                      {employee.email ? (
+                        <a href={`mailto:${employee.email}`} className="email-link">
+                          {employee.email}
+                        </a>
+                      ) : (
+                        <span>—</span>
+                      )}
                     </td>
                     <td>
-                      <a href={`tel:${employee.phoneNumber}`} className="phone-link">
-                        {employee.phoneNumber}
-                      </a>
+                      {(employee.phone || employee.phoneNumber) ? (
+                        <a href={`tel:${employee.phone || employee.phoneNumber}`} className="phone-link">
+                          {employee.phone || employee.phoneNumber}
+                        </a>
+                      ) : (
+                        <span>—</span>
+                      )}
                     </td>
-                    <td className="extension-cell">{employee.extension || '-'}</td>
-                    <td>
-                      <span className="department-badge">{employee.department}</span>
-                    </td>
-                    <td className="job-title-cell">{employee.jobTitle || '-'}</td>
+                    <td className="extension-cell">{(employee.extNumber || employee.extension) || '—'}</td>
+                    <td>{employee.directContact || '—'}</td>
+                    <td className="job-title-cell">{employee.jobTitle || '—'}</td>
                     <td>
                       <span
                         className={`status-badge ${

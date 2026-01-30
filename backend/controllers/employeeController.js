@@ -16,21 +16,23 @@ exports.getEmployees = async (req, res, next) => {
     if (req.query.search) {
       const searchRegex = new RegExp(req.query.search, 'i');
       query.$or = [
-        { fullName: searchRegex },
+        { name: searchRegex },
         { email: searchRegex },
-        { phoneNumber: searchRegex },
-        { department: searchRegex }
+        { phone: searchRegex },
+        { extNumber: searchRegex },
+        { directContact: searchRegex },
+        { jobTitle: searchRegex }
       ];
-    }
-
-    // Filter by department
-    if (req.query.department) {
-      query.department = req.query.department;
     }
 
     // Filter by status
     if (req.query.status) {
       query.status = req.query.status;
+    }
+
+    // Filter by job title
+    if (req.query.jobTitle) {
+      query.jobTitle = req.query.jobTitle;
     }
 
     // Sort
@@ -40,7 +42,7 @@ exports.getEmployees = async (req, res, next) => {
       const sortOrder = req.query.order === 'desc' ? -1 : 1;
       sortBy[sortField] = sortOrder;
     } else {
-      sortBy = { fullName: 1 }; // Default sort by name A-Z
+      sortBy = { name: 1 }; // Default sort by name A-Z
     }
 
     // Execute query
@@ -91,16 +93,15 @@ exports.getEmployee = async (req, res, next) => {
   }
 };
 
-// @desc    Get departments list
+// @desc    Get job titles list (for filters)
 // @route   GET /api/employees/departments
 // @access  Private
 exports.getDepartments = async (req, res, next) => {
   try {
-    const departments = await Employee.distinct('department');
-    
+    const jobTitles = await Employee.distinct('jobTitle').then((arr) => arr.filter(Boolean).sort());
     res.json({
       success: true,
-      data: { departments: departments.sort() }
+      data: { departments: jobTitles }
     });
   } catch (error) {
     next(error);
