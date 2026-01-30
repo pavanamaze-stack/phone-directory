@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
-// Fields: Name, Email, Phone, Ext Number, Direct Contact (DC), Job Title, Status – all optional
+// Fields: Name, Email, Phone, Ext Number, Direct Contact (DC), Job Title, Status – all optional.
+// No unique constraint on email so repeated/duplicate data is allowed.
 const employeeSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -12,8 +13,6 @@ const employeeSchema = new mongoose.Schema({
   email: {
     type: String,
     required: false,
-    unique: true,
-    sparse: true,
     lowercase: true,
     trim: true,
     index: true

@@ -85,15 +85,7 @@ exports.uploadCSV = async (req, res, next) => {
             for (let i = 0; i < results.length; i++) {
               const employeeData = results[i];
               try {
-                if (employeeData.email) {
-                  await Employee.findOneAndUpdate(
-                    { email: employeeData.email },
-                    employeeData,
-                    { upsert: true, new: true, runValidators: false }
-                  );
-                } else {
-                  await Employee.create(employeeData, { runValidators: false });
-                }
+                await Employee.create(employeeData, { runValidators: false });
                 successfulRows++;
               } catch (err) {
                 failedRows++;
