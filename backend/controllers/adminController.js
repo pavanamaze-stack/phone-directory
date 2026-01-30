@@ -2,35 +2,12 @@ const Employee = require('../models/Employee');
 const User = require('../models/User');
 const UploadLog = require('../models/UploadLog');
 
-// Create: strip empty strings so optional fields are not stored as '' (avoids unique email conflict)
-const sanitizeEmployeeBody = (body) => {
-  const out = { ...body };
-  const optionalKeys = ['fullName', 'email', 'phoneNumber', 'extension', 'department', 'jobTitle', 'officeLocation'];
-  optionalKeys.forEach((key) => {
-    if (out[key] !== undefined && typeof out[key] === 'string' && !out[key].trim()) {
-      out[key] = undefined;
-    }
-  });
-  return out;
-};
-
-// Update: allow null/empty so admins can clear fields; only omit undefined
-const sanitizeEmployeeBodyForUpdate = (body) => {
-  const out = { ...body };
-  ['fullName', 'email', 'phoneNumber', 'extension', 'department', 'jobTitle', 'officeLocation'].forEach((key) => {
-    if (out[key] === undefined) return;
-    out[key] = typeof out[key] === 'string' ? out[key].trim() : (out[key] ?? '');
-  });
-  return out;
-};
-
-// @desc    Create employee – all columns optional
+// @desc    Create employee
 // @route   POST /api/admin/employees
 // @access  Private/Admin
 exports.createEmployee = async (req, res, next) => {
   try {
-    const body = sanitizeEmployeeBody(req.body);
-    const employee = await Employee.create(body);
+    const employee = await Employee.create(req.body);
 
     res.status(201).json({
       success: true,
@@ -42,12 +19,12 @@ exports.createEmployee = async (req, res, next) => {
   }
 };
 
-// @desc    Update employee – all columns optional
+// @desc    Update employee
 // @route   PUT /api/admin/employees/:id
 // @access  Private/Admin
 exports.updateEmployee = async (req, res, next) => {
   try {
-    const employee = await Employee.findById(req.params.id);
+    let employee = await Employee.findById(req.params.id);
 
     if (!employee) {
       return res.status(404).json({
@@ -56,20 +33,19 @@ exports.updateEmployee = async (req, res, next) => {
       });
     }
 
-    const body = sanitizeEmployeeBodyForUpdate(req.body);
-    const updated = await Employee.findByIdAndUpdate(
+    employee = await Employee.findByIdAndUpdate(
       req.params.id,
-      body,
+      req.body,
       {
         new: true,
-        runValidators: false
+        runValidators: true
       }
     );
 
     res.json({
       success: true,
       message: 'Employee updated successfully',
-      data: { employee: updated }
+      data: { employee }
     });
   } catch (error) {
     next(error);
